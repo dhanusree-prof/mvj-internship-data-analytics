@@ -1,1 +1,0 @@
-# mvj-internship-data-analytics
