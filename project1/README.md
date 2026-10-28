@@ -1,163 +1,236 @@
-# Project 1: Online Retail KPI Analysis
+# Online Retail II — Sales and Customer KPI Analysis
 
 ## 1. Project Overview
 
-This project analyzes the Online Retail II dataset to understand sales performance across different months and countries. SQL is used to calculate business KPIs and identify patterns in revenue, order volume, and average order value.
+This project analyzes the Online Retail II transactional dataset to understand sales performance, customer purchasing behaviour, product performance, and monthly sales trends.
 
-**Business question:** How do sales value, order volume, and average order value vary over time and across countries?
+The analysis uses SQL for data preparation, aggregation, customer analysis, and time-series calculations. Microsoft Excel is used to present key performance indicators (KPIs), product comparisons, and monthly sales trends in a structured KPI workbook.
 
-**Intended audience:** Retail business managers and analysts who need to understand sales performance and identify areas for further investigation.
+**Project:** Online Retail II KPI Analysis  
+**Program:** MVJ Data Analytics Internship  
+**Tools:** SQLite, DB Browser for SQLite, SQL, Microsoft Excel Online  
+**Analysis period:** December 2009 – December 2011
 
-## 2. Objectives
+## 2. Business Problem
 
-- Load and validate the Online Retail II dataset using SQLite.
-- Calculate revenue-related measures and order counts by month and country.
-- Calculate average order value (AOV).
-- Examine data quality issues, including missing values, cancellations, and negative quantities.
-- Document findings, calculation methods, and limitations.
-- Prepare the results for further analysis in Excel.
+Retail businesses need to understand how sales change over time, which products contribute most to sales, how much customers spend per order, and whether customers return to make additional purchases.
+
+This project uses historical transaction data to answer the following business questions:
+
+- What are the overall sales and order performance metrics?
+- What is the average order value?
+- What proportion of identifiable customers make repeat purchases?
+- Which products generate the highest net sales proxy?
+- How does monthly sales performance change over time?
+- What actions could help improve sales monitoring and customer retention?
+
+**Intended audience:** Retail managers, sales analysts, and business stakeholders who need a concise overview of sales and customer performance.
 
 ## 3. Dataset and Source
 
-- **Dataset:** Online Retail II
-- **Source:** UCI Machine Learning Repository
-- **Dataset page:** https://archive.ics.uci.edu/dataset/502/online+retail+ii
-- **Citation:** Chen, D. (2012). *Online Retail II* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D
-- **Licence:** CC BY 4.0
+The project uses the **Online Retail II** dataset published by the UCI Machine Learning Repository.
+
+- **Source:** [UCI Machine Learning Repository — Online Retail II](https://archive.ics.uci.edu/dataset/502/online+retail+ii)
+- **Dataset creator:** Daqing Chen
+- **Dataset DOI:** [10.24432/C5CG6D](https://doi.org/10.24432/C5CG6D)
+- **Licence:** Creative Commons Attribution 4.0 International (CC BY 4.0)
 - **Original file:** `online_retail_II.xlsx`
-- **Source worksheets:** `year 2009-2010` and `year 2010-2011`
+- **Original dataset size:** 1,067,371 transaction records
+- **Source period:** 1 December 2009 – 9 December 2011
+- **Download date:** Not recorded; update this field if the original download date is available.
 
-The original workbook was exported into two CSV files for import into SQLite. The raw workbook and CSV files are retained locally and are not intended to be committed to GitHub because of their size.
+The original workbook contains two periods, represented in the source file by the sheets `year 2009-2010` and `year 2010-2011`.
 
-## 4. Tools Used
+The source dataset contains invoice numbers, product codes, descriptions, quantities, invoice dates, unit prices, customer identifiers, and countries.
 
-- SQLite
-- DB Browser for SQLite
-- SQL
-- Microsoft Excel or a compatible spreadsheet application
-- Git and GitHub for version control and documentation
+## 4. Tools and Technologies
 
-## 5. Repository Structure
+| Tool                   | Purpose 
+|------------------------|-------------------
+| SQLite                 | Store and query the transaction data 
+| DB Browser for SQLite  | Execute SQL queries and inspect results 
+| SQL                    | Calculate KPIs, analyze customers and products, and measure monthly changes 
+| Microsoft Excel Online | Organize KPI results and create charts 
+| Git and GitHub         | Track project files and document project progress 
 
-```text
+## 5. Data Preparation and Quality Checks
+
+The original data was imported into SQLite for analysis. The two source periods were made available through the tables `retail_2009_2010` and `retail_2010_2011`, with a combined view named `retail_transactions`.
+
+A normalized analysis view, `day07_normalized_transactions`, was created to prepare the transaction dates and calculate transaction-line values. The monthly sales view, `day07_monthly_sales`, supports the monthly trend analysis.
+
+The following preparation steps were applied:
+
+1. Combined the two source periods through the transaction view.
+2. Examined the table structures and transaction counts.
+3. Excluded invoices whose invoice numbers begin with `C`, which the dataset documentation identifies as cancellations.
+4. Excluded records with missing invoice dates from the normalized analysis view.
+5. Converted the source date strings into a consistent `YYYY-MM-DD` format for analysis.
+6. Calculated transaction-line value as quantity multiplied by unit price.
+7. Grouped transactions by month for monthly sales analysis.
+8. Used distinct invoice numbers when counting orders.
+9. Excluded records with missing customer identifiers from the repeat-customer calculation.
+10. Compared the overall transaction-line total with the sum of monthly sales to check aggregation consistency.
+
+### Data quality considerations
+
+The source dataset contains missing values. The analysis applies field-specific filters where necessary rather than assuming every field is complete.
+
+The imported source tables contain 525,461 rows for the 2010–2011 period; table structures were also checked against the other source period.
+
+Negative quantities in non-cancellation invoices were not automatically removed. Consequently, the calculated sales measure can reflect returns or adjustments represented by negative quantities.
+
+## 6. KPI Definitions
+
+| KPI                         | Definition 
+|-----------------------------|----------------
+| Net sales proxy             | Sum of quantity multiplied by unit price for included transaction lines 
+| Total orders                | Count of distinct included invoice numbers 
+| Average order value (AOV)   | Net sales proxy divided by total orders 
+| Repeat-customer rate        | Percentage of identifiable customers with at least two distinct included invoices 
+| Top products                | Products ranked by aggregated transaction-line value 
+| Monthly sales               | Sum of transaction-line values grouped by calendar month 
+| Month-on-month (MoM) growth | Percentage change in monthly sales compared with the preceding month 
+
+**Important:** The net sales proxy is an analytical measure calculated from the available transaction fields. It should not automatically be treated as audited revenue or official accounting sales.
+
+## 7. SQL Analysis
+
+The SQL work is organized into daily scripts under `project1/sql/`.
+
+### Day 5 — KPI and aggregation analysis
+
+- Calculated sales and order-related metrics.
+- Practised grouping and aggregation.
+- Checked the imported dataset and table structure.
+
+### Day 6 — Customer analysis
+
+- Used joins to combine customer-level analysis results.
+- Calculated customer order counts.
+- Classified customers using order-count-based segments:
+  - One-time: one order
+  - Repeat: two to four orders
+  - Frequent: five or more orders
+
+These segments describe observed order frequency and are not predictive customer classifications.
+
+### Day 7 — Window functions and time-series analysis
+
+- Normalized transaction dates.
+- Calculated monthly sales.
+- Used `SUM() OVER` for running totals.
+- Used `LAG()` to compare monthly sales with the previous month.
+- Ranked products by country using `ROW_NUMBER()`.
+- Identified first-purchase months and customer cohorts.
+
+### Day 8 — Final KPI pack
+
+The final KPI analysis covers:
+
+- Overall sales, orders, average order value, and transaction-line counts.
+- Repeat-customer rate.
+- Top 10 products by net sales proxy.
+- Monthly sales and month-on-month growth.
+- Reconciliation of overall and monthly totals.
+
+## 8. Excel KPI Dashboard
+
+The Excel workbook is named `Online_Retail_II_KPI_Pack.xlsx` and contains four sheets.
+
+| Sheet             | Contents 
+|-------------------|-----------
+| `KPI Summary`     | Overall KPI values and definitions 
+| `Repeat Rate`     | Identifiable customers, repeat customers, and repeat-customer rate 
+| `Top Products`    | Top 10 products by net sales proxy, with a horizontal bar chart 
+| `Monthly Trends`  | Monthly sales, previous-month sales, sales change, and MoM growth, with a line chart 
+
+The workbook is designed to make the analysis easier to interpret without requiring stakeholders to read the SQL queries.
+
+## 9. Key Findings
+
+The final numerical findings should be taken directly from the completed SQL outputs and Excel workbook.
+
+The following observations are supported by the current analysis:
+
+- The source dataset covers December 2009 through December 2011.
+- The monthly sales chart shows substantial variation in sales across the analysis period, including visible peaks in late 2010 and late 2011.
+- The top-products chart identifies products with the highest aggregated net sales proxy within the included transactions.
+- The repeat-customer calculation measures repeat purchasing among customers with identifiable customer IDs.
+- The monthly comparison includes both absolute sales changes and percentage MoM growth.
+
+**Final KPI values:** 
+net_sales_proxy	    : 20813918.43
+total_orders	    : 45336
+average_order_value : 459.1
+transaction_lines	: 1047877
+
+## 10. Business Recommendations
+
+The analysis can support the following recommendations. Each should be reviewed against the final KPI results before being presented as a confirmed business conclusion.
+
+1. **Monitor monthly sales:** Track monthly sales and MoM growth to identify unusually large increases or decreases and investigate the underlying transactions.
+2. **Review leading products:** Examine the highest-ranked products when making inventory, merchandising, and product-promotion decisions.
+3. **Track repeat purchasing:** Monitor the repeat-customer rate over time and investigate opportunities to encourage another purchase from one-time customers.
+4. **Monitor average order value:** Compare AOV across reporting periods to understand changes in average spending per order.
+5. **Improve reporting quality:** Standardize date handling, document cancellation and return treatment, and validate KPI totals before using them for business decisions.
+
+These recommendations are analytical suggestions, not proof that a particular business intervention will increase sales.
+
+## 11. Limitations
+
+- The dataset represents historical transactions from one online retailer and may not represent other retailers or current market conditions.
+- Missing customer identifiers prevent some transactions from being linked to a known customer.
+- Excluding invoices beginning with `C` removes cancellation invoices, but negative quantities in other invoices remain in the analysis.
+- The net sales proxy is calculated from quantity and unit price; it does not independently account for tax, shipping, discounts, or other accounting adjustments.
+- The date normalization focuses on calendar dates. The analysis does not use the full timestamp for intraday behaviour.
+- Repeat-customer rate depends on the identifiable customers and the included invoice records.
+- Historical correlations and trends do not establish causation.
+- Product descriptions may contain inconsistent wording or operational entries, so product rankings should be interpreted with care.
+
+## 12. Use of AI and Verification
+
+AI assistance was used to support the organization of project tasks, explain SQL concepts, troubleshoot queries, structure documentation, and improve the presentation of findings.
+
+AI-generated suggestions were treated as guidance rather than automatically accepted results. SQL outputs were checked in DB Browser for SQLite, table structures and row counts were inspected, monthly aggregation totals were compared with overall totals, and KPI values and charts were reviewed in Excel.
+
+## 13. Project Structure
+
 project1/
-├── data/          # Local source workbook and CSV exports
-├── database/      # Local SQLite database
-├── sql/           # SQL validation and KPI queries
-├── excel/         # Excel KPI analysis and workbook
-├── evidence/      # Screenshots of validation and results
-└── README.md      # Project documentation
-```
+├── README.md
+├── queries.sql
+├── recommendations.md
+├── sql/
+│   ├── day_05_kpi_analysis.sql
+│   ├── day_05_validation.sql
+│   ├── day_06_customer_analysis.sql
+│   ├── day_07_window_functions.sql
+│   └── day_08_kpi_analysis.sql
+├── excel/
+│   └── (optional working files or templates)
+├── evidence/
+│   ├── day_05_country_kpis.png
+│   ├── day_05_monthly_kpis.png
+│   ├── day_06_customer_analysis.png
+│   ├── day_07_window_functions.png
+│   ├── day_08_kpi_summary.png
+│   ├── day_08_top_products_chart.png
+│   └── day_08_monthly_sales_chart.png
+├── database/
+│   └── online_retail.db        [local only; do not commit]
+├── data/
+│   └── raw data files          [do not commit]
+└── outputs/
+    ├── overall_kpi_summary.csv
+    ├── repeat_customer_rate.csv
+    ├── top_10_products.csv
+    ├── monthly_sales_mom.csv
+    └── Online_Retail_II_KPI_Pack.xlsx
 
-The large raw data files and local database are excluded from GitHub commits. SQL scripts, documentation, and appropriate evidence are maintained in the repository.
+The excel/ directory is reserved for optional working spreadsheets and templates. The final KPI workbook and exported query results are stored in outputs/. The evidence/ directory contains screenshots documenting the SQL analysis, validation steps, and final dashboard. Raw source data and the local SQLite database are excluded from version control.
 
-## 6. Data Preparation and Validation
+## 14. References and Attribution
 
-The two worksheets were imported into SQLite as separate tables:
+Chen, D. (2012). *Online Retail II* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5CG6D
 
-- `retail_2009_2010`
-- `retail_2010_2011`
-
-The tables contain the following columns:
-
-- `Invoice`
-- `StockCode`
-- `Description`
-- `Quantity`
-- `InvoiceDate`
-- `Price`
-- `Customer ID`
-- `Country`
-
-### Import summary
-
-| Period | Imported rows |
-|---|---:|
-| 2009–2010 | 525,461 |
-| 2010–2011 | 541,910 |
-| **Total** | **1,067,371** |
-
-### Data quality checks
-
-| Check | 2009–2010 | 2010–2011 |
-|---|---:|---:|
-| Missing descriptions | 2,928 | 1,454 |
-| Missing customer IDs | 107,927 | 135,080 |
-| Missing invoice dates | 0 | 0 |
-| Missing countries | 0 | 0 |
-| Cancellation rows detected | 10,206 | 9,288 |
-| Negative quantity rows | 12,326 | 10,624 |
-| Zero quantity rows | 0 | 0 |
-
-These checks were performed using SQL. The original data was retained without deleting rows during the initial validation stage.
-
-## 7. KPI Definitions
-
-### Line value
-
-Calculated for each transaction line as:
-
-`Quantity × Price`
-
-### Order count
-
-The number of distinct invoice identifiers after excluding invoices whose identifiers begin with `C`, which are treated as cancellation invoices for the current analysis.
-
-### Average order value (AOV)
-
-Calculated as:
-
-`AOV = Total line value / Distinct non-cancellation invoice count`
-
-### Monthly analysis
-
-The transaction date is converted to a year-month format to group the results by calendar month.
-
-### Country analysis
-
-The same line-value, order-count, and AOV calculations are grouped by country.
-
-**Calculation note:** The current queries exclude cancellation invoices but retain negative quantities on other invoices. The resulting line-value measure is therefore a preliminary measure under the chosen filters and has not yet been fully reconciled as accounting revenue.
-
-## 8. Initial Findings
-
-The initial SQL queries executed successfully and produced monthly and country-level results.
-
-- December 2009 recorded a line value of 825,685.76, 1,929 distinct non-cancellation invoices, and an AOV of 428.04.
-- March 2010 recorded a line value of 833,570.13, 1,960 distinct non-cancellation invoices, and an AOV of 425.29.
-- September 2010 recorded a line value of 924,333.01, 2,004 distinct non-cancellation invoices, and an AOV of 461.24.
-- The United Kingdom had the highest line value among the countries shown in the initial results: 17,712,301.64, with 41,793 distinct non-cancellation invoices and an AOV of 423.81.
-- The Netherlands had an AOV of 2,420.23 across 229 distinct non-cancellation invoices in the displayed results.
-
-These are initial results, not final business conclusions. The analysis will be extended and validated before final recommendations are made.
-
-## 9. SQL Files
-
-The SQL scripts are maintained in the `sql/` directory.
-
-- `day_05_validation.sql` — table structure, row counts, missing values, cancellation checks, and other validation queries.
-- `day_05_kpi_analysis.sql` — combined transaction view and monthly and country-level KPI queries.
-
-## 10. Limitations
-
-- A substantial number of records have missing customer IDs, limiting customer-level analysis.
-- Cancellation invoices and negative quantities require careful treatment when defining revenue.
-- The current KPI calculations are preliminary and should be reconciled before final reporting.
-- The analysis describes the transactions available in the dataset and does not establish the causes behind sales differences between countries or months.
-- Country-level AOV can be affected by differences in order volume and order composition.
-- The dataset does not, by itself, explain customer motivations or future sales performance.
-
-## 11. Next Steps
-
-1. Validate the SQL KPI calculations and document the revenue definition.
-2. Build an Excel KPI workbook to present monthly and country-level results.
-3. Extend the SQL analysis to customer-level metrics using joins and `CASE` expressions.
-4. Calculate repeat purchase rate, top products, and month-on-month growth.
-5. Develop five evidence-based business recommendations.
-6. Update the project documentation and evidence as the analysis progresses.
-
-## 12. Use of AI
-
-AI assistance was used to support SQL query drafting, explain validation steps, and structure project documentation. Queries were executed in DB Browser for SQLite, and the displayed results were used to check whether the SQL ran successfully. Further validation of the KPI definitions and results is required before final recommendations are made.
-
-
+Dataset licence: Creative Commons Attribution 4.0 International (CC BY 4.0). Refer to the [official UCI dataset page](https://archive.ics.uci.edu/dataset/502/online+retail+ii) for the dataset description, licence, and citation information.

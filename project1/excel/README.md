@@ -1,0 +1,1 @@
+The excel/ directory is reserved for optional working spreadsheets and templates. The final KPI workbook and exported query results are stored in outputs/. The evidence/ directory contains screenshots documenting the SQL analysis, validation steps, and final dashboard. 
